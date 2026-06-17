@@ -6,8 +6,25 @@ import 'add_review_screen.dart';
 import '../../models/campus_model.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CampusDetailScreen extends StatelessWidget {
+  void shareCampus() {
+    final mapUrl =
+        "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent("${campus.location}, ${campus.country}")}";
+
+    Share.share('''
+🏫 ${campus.name}
+
+📍 ${campus.location}, ${campus.country}
+
+🗺️ Google Maps:
+$mapUrl
+
+Shared from NAKILA App
+''');
+  }
+
   final CampusModel campus;
 
   const CampusDetailScreen({super.key, required this.campus});
@@ -57,17 +74,26 @@ class CampusDetailScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        campus.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: Text(
+                          campus.name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
 
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
 
                       const Icon(Icons.verified, color: Colors.blue, size: 20),
+
+                      const SizedBox(width: 10),
+
+                      IconButton(
+                        onPressed: shareCampus,
+                        icon: const Icon(Icons.share),
+                      ),
                     ],
                   ),
                   Row(

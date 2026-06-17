@@ -8,13 +8,17 @@ class CampusCard extends StatelessWidget {
 
   final VoidCallback onTap;
   final VoidCallback onFavoriteTap;
-  
+  final bool isSelected;
+  final VoidCallback onCompareTap;
+
   const CampusCard({
     super.key,
     required this.campus,
     required this.onTap,
     required this.onFavoriteTap,
-    
+
+    required this.isSelected,
+    required this.onCompareTap,
   });
 
   @override
@@ -25,80 +29,71 @@ class CampusCard extends StatelessWidget {
       child: Container(
         width: 260,
 
-        margin: const EdgeInsets.only(
-          right: 20,
-          bottom: 15,
-        ),
+        margin: const EdgeInsets.only(right: 20, bottom: 15),
 
         decoration: BoxDecoration(
-          color: Theme.of(context)
-        .cardColor,
+          color: Theme.of(context).cardColor,
 
-          borderRadius:
-              BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(24),
 
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: .08,
-              ),
+              color: Colors.black.withValues(alpha: .08),
               blurRadius: 15,
-              offset: const Offset(
-                0,
-                5,
-              ),
+              offset: const Offset(0, 5),
             ),
           ],
         ),
 
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-
-            /// IMAGE
             Stack(
               children: [
-
                 Hero(
-  tag: campus.id,
+                  tag: campus.id,
 
-  child: SizedBox(
-    height: 220,
-    width: double.infinity,
+                  child: SizedBox(
+                    height: 220,
+                    width: double.infinity,
 
-    child: campus.image.isEmpty
-
-        ? Container(
-            color: Colors.grey.shade200,
-
-            child: const Center(
-              child: Icon(
-                Icons.image,
-                size: 70,
-              ),
-            ),
-          )
-
-        : campus.image.startsWith(
-            "assets/",
-          )
-
-            ? Image.asset(
-                campus.image,
-                fit: BoxFit.cover,
-              )
-
-            : Image.memory(
-                base64Decode(
-                  campus.image,
+                    child:
+                        campus.image.isEmpty
+                            ? Container(
+                              color: Colors.grey.shade200,
+                              child: const Center(
+                                child: Icon(Icons.image, size: 70),
+                              ),
+                            )
+                            : campus.image.startsWith("assets/")
+                            ? Image.asset(campus.image, fit: BoxFit.cover)
+                            : Image.memory(
+                              base64Decode(campus.image),
+                              fit: BoxFit.cover,
+                            ),
+                  ),
                 ),
-                fit: BoxFit.cover,
-              ),
-  ),
-),
-                
+
+                Positioned(
+                  top: 12,
+                  left: 12,
+
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+
+                    child: Checkbox(
+                      value: isSelected,
+
+                      onChanged: (_) {
+                        onCompareTap();
+                      },
+                    ),
+                  ),
+                ),
 
                 Positioned(
                   top: 12,
@@ -108,32 +103,19 @@ class CampusCard extends StatelessWidget {
                     onTap: onFavoriteTap,
 
                     child: Container(
-                      padding:
-                          const EdgeInsets.all(
-                        10,
-                      ),
+                      padding: const EdgeInsets.all(10),
 
-                      decoration:
-                          BoxDecoration(
-                        color:
-                            Colors.white,
-                        borderRadius:
-                            BorderRadius
-                                .circular(
-                          15,
-                        ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
                       ),
 
                       child: Icon(
                         campus.isFavorite
                             ? Icons.favorite
-                            : Icons
-                                .favorite_border,
+                            : Icons.favorite_border,
 
-                        color:
-                            campus.isFavorite
-                                ? Colors.red
-                                : Colors.grey,
+                        color: campus.isFavorite ? Colors.red : Colors.grey,
                       ),
                     ),
                   ),
@@ -142,34 +124,24 @@ class CampusCard extends StatelessWidget {
             ),
 
             Padding(
-              padding:
-                  const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(18),
 
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
-
                   Row(
                     children: [
-
                       Expanded(
                         child: Text(
                           campus.name,
 
                           maxLines: 1,
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
+                          overflow: TextOverflow.ellipsis,
 
-                          style:
-                              GoogleFonts
-                                  .poppins(
+                          style: GoogleFonts.poppins(
                             fontSize: 18,
-                            fontWeight:
-                                FontWeight
-                                    .bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -187,7 +159,6 @@ class CampusCard extends StatelessWidget {
 
                   Row(
                     children: [
-
                       const Icon(
                         Icons.location_on,
                         color: Colors.grey,
@@ -202,15 +173,10 @@ class CampusCard extends StatelessWidget {
 
                           maxLines: 1,
 
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
+                          overflow: TextOverflow.ellipsis,
 
-                          style:
-                              GoogleFonts
-                                  .poppins(
-                            color:
-                                Colors.grey,
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey,
                             fontSize: 13,
                           ),
                         ),
@@ -222,52 +188,33 @@ class CampusCard extends StatelessWidget {
 
                   Row(
                     children: [
-
                       Container(
-                        padding:
-                            const EdgeInsets
-                                .symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 5,
                         ),
 
-                        decoration:
-                            BoxDecoration(
-                          color:
-                              const Color(
-                            0xffFFF7E6,
-                          ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffFFF7E6),
 
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            12,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
                         ),
 
                         child: Row(
                           children: [
-
                             const Icon(
                               Icons.star,
                               color: Colors.orange,
                               size: 16,
                             ),
 
-                            const SizedBox(
-                              width: 4,
-                            ),
+                            const SizedBox(width: 4),
 
                             Text(
-                              campus.rating
-                                  .toString(),
+                              campus.rating.toString(),
 
-                              style:
-                                  GoogleFonts
-                                      .poppins(
-                                fontWeight:
-                                    FontWeight
-                                        .w600,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -277,39 +224,24 @@ class CampusCard extends StatelessWidget {
                       const Spacer(),
 
                       Container(
-                        padding:
-                            const EdgeInsets
-                                .symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 5,
                         ),
 
-                        decoration:
-                            BoxDecoration(
-                          color:
-                              const Color(
-                            0xffE8F5E9,
-                          ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffE8F5E9),
 
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            12,
-                          ),
+                          borderRadius: BorderRadius.circular(12),
                         ),
 
                         child: Text(
                           "Verified",
 
-                          style:
-                              GoogleFonts
-                                  .poppins(
-                            color:
-                                Colors.green,
+                          style: GoogleFonts.poppins(
+                            color: Colors.green,
                             fontSize: 12,
-                            fontWeight:
-                                FontWeight
-                                    .w600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -323,12 +255,9 @@ class CampusCard extends StatelessWidget {
 
                     maxLines: 2,
 
-                    overflow:
-                        TextOverflow
-                            .ellipsis,
+                    overflow: TextOverflow.ellipsis,
 
-                    style:
-                        GoogleFonts.poppins(
+                    style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: Colors.black87,
                       height: 1.5,

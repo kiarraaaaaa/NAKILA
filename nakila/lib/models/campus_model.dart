@@ -4,7 +4,7 @@ class CampusModel {
   final String image;
   final String location;
   final String country;
-
+  
   final double rating;
   final bool verified;
 

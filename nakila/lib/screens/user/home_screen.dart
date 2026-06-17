@@ -12,100 +12,99 @@ import 'profile_screen.dart';
 import '../../services/favorite_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/campus_service.dart';
+import 'compare_campus_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() =>
-      _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState
-    extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
+  List<CampusModel> selectedCampuses = [];
 
-  final TextEditingController
-      searchController =
-      TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
-  String currentLocation =
-    "Location not detected";
-  
+  String currentLocation = "Location not detected";
+
   String searchQuery = "";
 
   Future<void> getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.requestPermission();
 
-  try {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
 
-    LocationPermission permission =
-        await Geolocator
-            .requestPermission();
+      Position position = await Geolocator.getCurrentPosition();
 
-    if (permission ==
-            LocationPermission.denied ||
-        permission ==
-            LocationPermission
-                .deniedForever) {
-
-      return;
+      setState(() {
+        currentLocation =
+            "${position.latitude.toStringAsFixed(4)}, "
+            "${position.longitude.toStringAsFixed(4)}";
+      });
+    } catch (e) {
+      debugPrint("LOCATION ERROR: $e");
     }
-
-    Position position =
-        await Geolocator
-            .getCurrentPosition();
-
-    setState(() {
-
-      currentLocation =
-          "${position.latitude.toStringAsFixed(4)}, "
-          "${position.longitude.toStringAsFixed(4)}";
-    });
-
-  } catch (e) {
-
-    debugPrint(
-      "LOCATION ERROR: $e",
-    );
   }
-} 
-
 
   @override
   void initState() {
     super.initState();
   }
 
+  void toggleCompare(CampusModel campus) {
+    setState(() {
+      if (selectedCampuses.any((e) => e.id == campus.id)) {
+        selectedCampuses.removeWhere((e) => e.id == campus.id);
+      } else {
+        if (selectedCampuses.length < 2) {
+          selectedCampuses.add(campus);
+        }
+      }
+    });
+
+    if (selectedCampuses.length == 2) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("2 Universities Selected")));
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => CompareCampusScreen(
+                campus1: selectedCampuses[0],
+                campus2: selectedCampuses[1],
+              ),
+        ),
+      );
+    }
+  }
+
   void openScreen(int index) {
-
     switch (index) {
-
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) =>
-                const FavoriteScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const FavoriteScreen()),
         );
         break;
 
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) =>
-                const ProfileScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
         );
         break;
 
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) =>
-                const AboutScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const AboutScreen()),
         );
         break;
     }
@@ -113,87 +112,58 @@ class _HomeScreenState
 
   @override
   Widget build(BuildContext context) {
-
-    bool desktop =
-        MediaQuery.of(context)
-                .size
-                .width >
-            900;
+    bool desktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-  backgroundColor:
-      Theme.of(context)
-          .scaffoldBackgroundColor,
-
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       body: Row(
         children: [
-
           if (desktop)
-  StreamBuilder(
-    stream: UserService().getCurrentUser(),
-    builder: (context, snapshot) {
+            StreamBuilder(
+              stream: UserService().getCurrentUser(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox();
+                }
 
-      if (!snapshot.hasData) {
-        return const SizedBox();
-      }
+                final user = snapshot.data!.data()!;
+                print(user["profileUrl"]);
+                return CustomSidebar(
+                  userName: user["name"] ?? "",
 
-      final user =
-          snapshot.data!.data()!;
-        print(
-  user["profileUrl"],
-);
-      return CustomSidebar(
-        userName:
-            user["name"] ?? "",
+                  role:
+                      user["role"] == "admin"
+                          ? "System Administrator"
+                          : "Student",
 
-        role:
-            user["role"] == "admin"
-                ? "System Administrator"
-                : "Student",
+                  profileImage: user["photoUrl"] ?? "",
 
-        profileImage:
-    user["photoUrl"] ?? "",
+                  selectedIndex: 0,
 
-        selectedIndex: 0,
+                  onItemTap: openScreen,
+                );
+              },
+            ),
 
-        onItemTap: openScreen,
-      );
-      
-    },
-    
-  ),
-
-  
           Expanded(
             child: SafeArea(
               child: Column(
                 children: [
-
                   if (!desktop)
-
                     Container(
-                      padding:
-                          const EdgeInsets
-                              .all(15),
+                      padding: const EdgeInsets.all(15),
 
                       child: Row(
                         children: [
-
                           Builder(
                             builder: (context) {
-
                               return IconButton(
-  onPressed: () {
+                                onPressed: () {
+                                  Scaffold.of(context).openDrawer();
+                                },
 
-    Scaffold.of(
-      context,
-    ).openDrawer();
-  },
-
-  icon: const Icon(
-    Icons.menu,
-  ),
+                                icon: const Icon(Icons.menu),
                               );
                             },
                           ),
@@ -201,14 +171,9 @@ class _HomeScreenState
                           Text(
                             "NAKILA",
 
-                            style:
-                                GoogleFonts
-                                    .poppins(
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                              fontSize:
-                                  20,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
                             ),
                           ),
                         ],
@@ -216,323 +181,205 @@ class _HomeScreenState
                     ),
 
                   Expanded(
-                    child:
-                        SingleChildScrollView(
-                      padding:
-                          const EdgeInsets
-                              .all(25),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(25),
 
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
                         children: [
-
                           Text(
                             "Discover Your Dream University",
 
-                            style:
-                                GoogleFonts
-                                    .poppins(
-                              fontSize:
-                                  30,
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
+                            style: GoogleFonts.poppins(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 10,
-                          ),
+                          const SizedBox(height: 10),
 
                           Text(
                             "Explore the world's best universities.",
 
-                            style:
-                                GoogleFonts
-                                    .poppins(
-                              color:
-                                  Colors.grey,
-                            ),
+                            style: GoogleFonts.poppins(color: Colors.grey),
                           ),
 
-                          const SizedBox(
-                            height: 25,
-                          ),
+                          const SizedBox(height: 25),
 
                           Container(
-                            padding:
-                                const EdgeInsets
-                                    .all(18),
+                            padding: const EdgeInsets.all(18),
 
                             decoration: BoxDecoration(
-  color: Theme.of(context).cardColor,
+                              color: Theme.of(context).cardColor,
 
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                20,
-                              ),
+                              borderRadius: BorderRadius.circular(20),
                             ),
 
                             child: Row(
                               children: [
-
                                 const Icon(
-                                  Icons
-                                      .location_on,
-                                  color:
-                                      Colors
-                                          .blue,
+                                  Icons.location_on,
+                                  color: Colors.blue,
                                 ),
 
-                                const SizedBox(
-                                  width:
-                                      10,
-                                ),
+                                const SizedBox(width: 10),
 
                                 Expanded(
-                                  child:
-                                      Text(
-                                    currentLocation ==
-        "Location not detected"
-
-    ? "Allow location access to discover universities around you."
-
-    : "Current Location: $currentLocation",
+                                  child: Text(
+                                    currentLocation == "Location not detected"
+                                        ? "Allow location access to discover universities around you."
+                                        : "Current Location: $currentLocation",
 
                                     style: GoogleFonts.poppins(
-  color:
-      Theme.of(context)
-          .textTheme
-          .bodyMedium
-          ?.color,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.color,
                                     ),
-                                      ),
+                                  ),
                                 ),
 
                                 ElevatedButton(
-  onPressed: getCurrentLocation,
+                                  onPressed: getCurrentLocation,
 
-  child: const Text(
-    "Allow",
-  ),
-),
+                                  child: const Text("Allow"),
+                                ),
                               ],
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 25,
-                          ),
+                          const SizedBox(height: 25),
 
                           TextField(
-  controller:
-      searchController,
+                            controller: searchController,
 
-  onChanged: (value) {
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value.toLowerCase();
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: "Search University",
 
-    setState(() {
-      searchQuery =
-          value.toLowerCase();
-    });
-  },
-                            decoration:
-                                InputDecoration(
-                              hintText:
-                                  "Search University",
+                              prefixIcon: const Icon(Icons.search),
 
-                              prefixIcon:
-                                  const Icon(
-                                Icons
-                                    .search,
-                              ),
+                              filled: true,
 
-                              filled:
-                                  true,
+                              fillColor: Theme.of(context).cardColor,
 
-                              fillColor:
-    Theme.of(context)
-        .cardColor,
-
-                              border:
-                                  OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.circular(
-                                  18,
-                                ),
-                                borderSide:
-                                    BorderSide.none,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 30,
-                          ),
+                          const SizedBox(height: 30),
 
                           Text(
                             "Featured Universities",
 
-                            style:
-                                GoogleFonts
-                                    .poppins(
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                              fontSize:
-                                  24,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 20,
+                          const SizedBox(height: 20),
+
+                          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                            stream: CampusService().getCampuses(),
+
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+
+                              final campuses =
+                                  snapshot.data!.docs
+                                      .map((e) => CampusModel.fromMap(e.data()))
+                                      .where((campus) {
+                                        return campus.name
+                                            .toLowerCase()
+                                            .contains(searchQuery);
+                                      })
+                                      .toList();
+                              return StreamBuilder<QuerySnapshot>(
+                                stream: FavoriteService().getFavorites(),
+
+                                builder: (context, favoriteSnapshot) {
+                                  if (!favoriteSnapshot.hasData) {
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+
+                                  final favoriteIds =
+                                      favoriteSnapshot.data!.docs
+                                          .map((e) => e["campusId"] as String)
+                                          .toList();
+
+                                  return Wrap(
+                                    spacing: 20,
+                                    runSpacing: 20,
+
+                                    children:
+                                        campuses.map((campus) {
+                                          return CampusCard(
+                                            campus: CampusModel(
+                                              id: campus.id,
+                                              name: campus.name,
+                                              image: campus.image,
+                                              location: campus.location,
+                                              country: campus.country,
+                                              rating: campus.rating,
+                                              verified: campus.verified,
+                                              description: campus.description,
+                                              history: campus.history,
+                                              foundedYear: campus.foundedYear,
+                                              worldRanking: campus.worldRanking,
+                                              achievements: campus.achievements,
+                                              programs: campus.programs,
+
+                                              isFavorite: favoriteIds.contains(
+                                                campus.id,
+                                              ),
+                                            ),
+
+                                            isSelected: selectedCampuses.any(
+                                              (e) => e.id == campus.id,
+                                            ),
+
+                                            onCompareTap: () {
+                                              toggleCompare(campus);
+                                            },
+
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (_) => CampusDetailScreen(
+                                                        campus: campus,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+
+                                            onFavoriteTap: () async {
+                                              await FavoriteService()
+                                                  .toggleFavorite(campus.id);
+                                            },
+                                          );
+                                        }).toList(),
+                                  );
+                                },
+                              );
+                            },
                           ),
-
-                         StreamBuilder<
-    QuerySnapshot<
-        Map<String, dynamic>>>(
-  stream:
-      CampusService()
-          .getCampuses(),
-
-  builder:
-      (
-    context,
-    snapshot,
-  ) {
-
-    if (!snapshot.hasData) {
-
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
-    }
-
-    final campuses =
-    snapshot.data!.docs
-        .map(
-          (e) =>
-              CampusModel.fromMap(
-            e.data(),
-          ),
-        )
-        .where(
-          (campus) {
-
-            return campus.name
-                .toLowerCase()
-                .contains(
-                  searchQuery,
-                );
-          },
-        )
-        .toList();
-    return StreamBuilder<
-    QuerySnapshot>(
-  stream:
-      FavoriteService()
-          .getFavorites(),
-
-  builder:
-      (
-    context,
-    favoriteSnapshot,
-  ) {
-
-    if (!favoriteSnapshot
-        .hasData) {
-
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
-    }
-
-    final favoriteIds =
-        favoriteSnapshot
-            .data!
-            .docs
-            .map(
-              (e) =>
-                  e["campusId"]
-                      as String,
-            )
-            .toList();
-
-    return Wrap(
-      spacing: 20,
-      runSpacing: 20,
-
-      children:
-          campuses.map(
-        (campus) {
-
-          return CampusCard(
-            campus: CampusModel(
-  id: campus.id,
-  name: campus.name,
-  image: campus.image,
-  location: campus.location,
-  country: campus.country,
-  rating: campus.rating,
-  verified: campus.verified,
-  description:
-      campus.description,
-  history:
-      campus.history,
-  foundedYear:
-      campus.foundedYear,
-  worldRanking:
-      campus.worldRanking,
-  achievements:
-      campus.achievements,
-  programs:
-      campus.programs,
-
-  isFavorite:
-      favoriteIds.contains(
-    campus.id,
-  ),
-),
-
-            onTap: () {
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      CampusDetailScreen(
-                    campus:
-                        campus,
-                  ),
-                ),
-              );
-            },
-
-            onFavoriteTap:
-                () async {
-
-              await FavoriteService()
-                  .toggleFavorite(
-                campus.id,
-              );
-            },
-          );
-        },
-      ).toList(),
-    );
-  },
-    );
-  },
-        ),
-
-                                     
-                        
-                          
                         ],
                       ),
                     ),
@@ -545,4 +392,4 @@ class _HomeScreenState
       ),
     );
   }
-    }
+}
